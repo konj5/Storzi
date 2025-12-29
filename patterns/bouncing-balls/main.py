@@ -39,6 +39,8 @@ N = 2 # Število kroglic
 tmax = 100  # Čas v sekundah preden se vzorec ponovi
 dt = 0.001  # Časovni korak integracije (mora biti majhen, sicer krogla prebije steno)
 
+RGB = [0,0,255] #
+
 metadata = [v0, std_v, radius0, std_rad, N, tmax, dt]
 #######################################
 
@@ -55,7 +57,6 @@ def get_random_velocity():
     direction = direction / np.linalg.norm(direction)
 
     return (v0 + np.random.normal(0, std_v, 1)) * direction
-
 
 def get_trajectory(dt, tmax):
     generate = True
@@ -95,7 +96,7 @@ def get_trajectory(dt, tmax):
         #print(rs)
 
         
-        data = np.array([metadata, CubicSpline(ts, rs, axis=1)], dtype=object)
+        data = np.array([metadata, [CubicSpline(ts, rs, axis=1), radiuses]], dtype=object)
 
         np.save("patterns\\bouncing-balls\\data.npy", data, allow_pickle=True)
 
@@ -171,13 +172,28 @@ def reflect_from_eachother(r,v, radiuses, masses):
     return r, v
 
 
-
+r_func, radiuses = get_trajectory(dt, tmax)
 
 def callback(jelka: Jelka):
-    pass
+    t = (jelka.frame / 60) % tmax
+    r = r_func(t)
+
+
+    for light, position in jelka.positions_normalized.items():
+        
+        for i in range(N):
+            if is_in_ball(radiuses[i], position, r[i,:]):
+                jelka.set_light(light, Color(RGB[0], RGB[1], RGB[2]).vivid())
+
+    ### UGOROVI, kako nardit da se lučke počasi ugašajo ko niso več notri
+                
+    
 
 
 
 
 
 jelka.run(callback)
+
+
+#jelka.set_light(light, cols[j])
