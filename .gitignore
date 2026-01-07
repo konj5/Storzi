@@ -117,3 +117,4 @@ web_modules/
 yotta_modules/
 yotta_targets/
 pxt_modules/
+patterns/bouncing-balls/data.npy
