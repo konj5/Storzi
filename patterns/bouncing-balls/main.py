@@ -6,16 +6,22 @@ from jelka.types import Color
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-
+jelka = Jelka(60)
 
 data = np.load("patterns\\bouncing-balls\\data.npy", allow_pickle=True)
 v0, std_v, radius0, std_rad, N, decay_rate, tmax, dt, RGB = data[0]
 lights_func = data[1]
 
+
 def callback(jelka: Jelka):
     t = (jelka.frame / 60) % tmax
     lights = lights_func(t)
 
+    i = -1
+    for light, position in jelka.positions_normalized.items():
+        i += 1
+        
+        jelka.set_light(light, Color(lights[i,0], lights[i,1], lights[i,2]))
 
 
 jelka.run(callback)

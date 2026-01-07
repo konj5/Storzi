@@ -94,6 +94,12 @@ def get_trajectory(dt, tmax):
 
         rs[:,i-1,:], vs[:,i-1,:] = reflect_from_eachother(rs[:,i-1,:],vs[:,i-1,:], radiuses, masses)
 
+    ##### Razredči ts, saj za risanje ne potrebujemo toliko točk kot smo za simulatijo
+
+    step =  len(ts) //  (tmax*60)
+    ts = ts[::step]
+    rs = rs[:, ::step, :]
+
 
     ########### Zdaj imamo trajektorijo, pretvoriti moramo v funkcije svetlosti lučk
 
@@ -114,7 +120,9 @@ def get_trajectory(dt, tmax):
                     break
 
 
-    data = np.array([metadata, [CubicSpline(ts, lights, axis=0)]], dtype=object)
+    
+
+    data = np.array([metadata, CubicSpline(ts, lights, axis=0)], dtype=object)
     np.save("patterns\\bouncing-balls\\data.npy", data, allow_pickle=True)
 
 
