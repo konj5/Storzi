@@ -35,13 +35,14 @@ std_v = 0.05 # Standardna deviacija začetne hitrosti kroglic
 radius0 = 0.1  # povprečni radij krogle
 std_rad = 0.01 # Standardna deviacija radija kroglic
 N = 2 # Število kroglic
+decay_rate = 0.1 # faktor [0,inf], s katerim upada svetlost sledi : exp(- decay_rate * t)
 
 tmax = 100  # Čas v sekundah preden se vzorec ponovi
 dt = 0.001  # Časovni korak integracije (mora biti majhen, sicer krogla prebije steno)
 
-RGB = [0,0,255] #
+RGB = [0,0,255] #Barva žogic
 
-metadata = [v0, std_v, radius0, std_rad, N, tmax, dt]
+metadata = [v0, std_v, radius0, std_rad, N, decay_rate, tmax, dt, RGB]
 #######################################
 
 def get_random_inside():
@@ -93,11 +94,27 @@ def get_trajectory(dt, tmax):
 
             rs[:,i-1,:], vs[:,i-1,:] = reflect_from_eachother(rs[:,i-1,:],vs[:,i-1,:], radiuses, masses)
 
-        #print(rs)
 
-        
-        data = np.array([metadata, [CubicSpline(ts, rs, axis=1), radiuses]], dtype=object)
+        ########### Zdaj imamo trajektorijo, pretvoriti moramo v funkcije svetlosti lučk
 
+        lights = np.zeros((len(ts), len(jelka.lights), 3), dtype=float)
+
+        for i in range(len(ts)):
+            if i != 0:
+                lights[i, :, :] = lights[i-1, :, :] * np.exp(-decay_rate * dt)
+
+
+            j = -1
+            for light, position in jelka.positions_normalized.items():
+                j+=1
+                
+                for k in range(N):
+                    if is_in_ball(radiuses[k], position, rs[k,i,:]):
+                        lights[i, j, :] = RGB
+                        break
+
+
+        data = np.array([metadata, [CubicSpline(ts, lights, axis=0)]], dtype=object)
         np.save("patterns\\bouncing-balls\\data.npy", data, allow_pickle=True)
 
 
@@ -172,23 +189,13 @@ def reflect_from_eachother(r,v, radiuses, masses):
     return r, v
 
 
-r_func, radiuses = get_trajectory(dt, tmax)
+lights_func = get_trajectory(dt, tmax)
 
 def callback(jelka: Jelka):
     t = (jelka.frame / 60) % tmax
-    r = r_func(t)
+    lights = lights_func(t)
 
-
-    for light, position in jelka.positions_normalized.items():
-        
-        for i in range(N):
-            if is_in_ball(radiuses[i], position, r[i,:]):
-                jelka.set_light(light, Color(RGB[0], RGB[1], RGB[2]).vivid())
-
-    ### UGOROVI, kako nardit da se lučke počasi ugašajo ko niso več notri
-                
-    
-
+    ## Samo še izriši lights
 
 
 
